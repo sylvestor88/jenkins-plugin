@@ -129,8 +129,11 @@ public class BuildAnalyticsNotifier extends Notifier implements SimpleBuildStep 
 		} else {
 			LOG.info("In case of failure" + r.toString());
 		}
-		
-		uploadFile(file, this.serverIp, r.isCompleteBuild());
+		if(!this.uploadOnlyOnFail){
+			uploadFile(file, this.serverIp, r.isCompleteBuild());
+		}else{
+			LOG.info("Skipping upload as requested");
+		}
 		return !(failBuild);
 	}
 
