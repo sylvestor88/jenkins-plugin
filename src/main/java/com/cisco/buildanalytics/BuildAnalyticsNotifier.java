@@ -28,6 +28,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -57,12 +60,18 @@ public class BuildAnalyticsNotifier extends Notifier implements SimpleBuildStep 
 	public boolean failBuild;
 	public boolean uploadOnlyOnFail;
 	public String serverIp;
+	public String buildStageType;
+	public String jenkinsServerIp;
+	public String prefixUser;
 
 	@DataBoundConstructor
-	public BuildAnalyticsNotifier(String serverIp, boolean uploadOnlyOnFail, boolean failBuild) {
+	public BuildAnalyticsNotifier(String serverIp, boolean uploadOnlyOnFail, boolean failBuild, String buildStageType, String jenkinsServerIp, String prefixUser) {
 		this.failBuild = failBuild;
 		this.serverIp = serverIp;
 		this.uploadOnlyOnFail = uploadOnlyOnFail;
+		this.buildStageType = buildStageType;
+		this.jenkinsServerIp = jenkinsServerIp;
+		this.prefixUser = prefixUser;
 	}
 
 	@Override
@@ -119,7 +128,50 @@ public class BuildAnalyticsNotifier extends Notifier implements SimpleBuildStep 
 		LOG.info("LOGSTASH performing");
 		LOG.info("Val " + this.serverIp + this.uploadOnlyOnFail);
 		File file = run.getLogFile();
+		LOG.info("run.getDescription() : " + run.getDescription());
+		LOG.info("run.getBuildStatusUrl() : " + run.getBuildStatusUrl());
+		LOG.info("run.getDisplayName() : " + run.getDisplayName());
+		LOG.info("run.getFullDisplayName() : " + run.getFullDisplayName());
+		LOG.info("run.getId() : " + run.getId());
+		LOG.info("run.getSearchName() : " + run.getSearchName());
+		LOG.info("run.getUrl() : " + run.getUrl());
+		LOG.info("run.getRootDir() : " + run.getRootDir());
+
+		/**
+		rest end-point 1. build-stage-type : user input
+		2. build-url : getUrl()
+		3. filename : String filename
+		9:54 AM
+		4. jenkins-address : user input
+		5. prefixFromUser : user input
+		**/
+
+		String fileName = "prefixFromUser-" + run.getId();
+		String buildUrl = run.getUrl();
+
+		BuildParamsDTO buildParamsDTO = new BuildParamsDTO();
+		buildParamsDTO.setBuildStageType(buildStageType);
+		buildParamsDTO.setBuildUrl(buildUrl);
+		buildParamsDTO.setJenkinsServerIp(jenkinsServerIp);
+		buildParamsDTO.setPrefixUser(prefixUser);
+		//buildParamsDTO.setServerIp(serverIp);
+		buildParamsDTO.setFileName(fileName);
+
+		LOG.info("File : " + file.toString());
+		Path newLink = Paths.get("/home/raashid/Directory-Filebeats/First.log"); //Filebeats read loc : $FILEBEAT_DIR
+		LOG.info("newLink : " + newLink.toString());
+		Path target = Paths.get(file.getAbsolutePath()); // The file name : BuildNumber-JobName-PipelineName.log
+		LOG.info("target : " + target.toString());
+		try {
+			LOG.info("Creating symbolic link");
+			Files.createSymbolicLink(newLink, target);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			LOG.info(e.toString());
+		}
+		LOG.info("Going to run for the result");
 		Result r = run.getResult();
+		LOG.info(" Result r : " + r.toString());
 		if (r != null) {
 			LOG.info("Finished with Result:" + " :: " + r.toString());
 			if (r.isCompleteBuild()) {
@@ -131,6 +183,7 @@ public class BuildAnalyticsNotifier extends Notifier implements SimpleBuildStep 
 		}
 		if(!this.uploadOnlyOnFail){
 			uploadFile(file, this.serverIp, r.isCompleteBuild());
+			//REST endpoint
 		}else{
 			LOG.info("Skipping upload as requested");
 		}
@@ -158,7 +211,7 @@ public class BuildAnalyticsNotifier extends Notifier implements SimpleBuildStep 
 		}
 
 		public String getDisplayName() {
-			return "Upload Logs";
+			return "Upload Logs-Raashid";
 		}
 	}
 }
