@@ -128,24 +128,6 @@ public class BuildAnalyticsNotifier extends Notifier implements SimpleBuildStep 
 		LOG.info("LOGSTASH performing");
 		LOG.info("Val " + this.serverIp + this.uploadOnlyOnFail);
 		File file = run.getLogFile();
-		LOG.info("run.getDescription() : " + run.getDescription());
-		LOG.info("run.getBuildStatusUrl() : " + run.getBuildStatusUrl());
-		LOG.info("run.getDisplayName() : " + run.getDisplayName());
-		LOG.info("run.getFullDisplayName() : " + run.getFullDisplayName());
-		LOG.info("run.getId() : " + run.getId());
-		LOG.info("run.getSearchName() : " + run.getSearchName());
-		LOG.info("run.getUrl() : " + run.getUrl());
-		LOG.info("run.getRootDir() : " + run.getRootDir());
-
-		/**
-		rest end-point 1. build-stage-type : user input
-		2. build-url : getUrl()
-		3. filename : String filename
-		9:54 AM
-		4. jenkins-address : user input
-		5. prefixFromUser : user input
-		**/
-
 		String fileName = "prefixFromUser-" + run.getId();
 		String buildUrl = run.getUrl();
 
@@ -154,19 +136,17 @@ public class BuildAnalyticsNotifier extends Notifier implements SimpleBuildStep 
 		buildParamsDTO.setBuildUrl(buildUrl);
 		buildParamsDTO.setJenkinsServerIp(jenkinsServerIp);
 		buildParamsDTO.setPrefixUser(prefixUser);
-		//buildParamsDTO.setServerIp(serverIp);
 		buildParamsDTO.setFileName(fileName);
 
 		LOG.info("File : " + file.toString());
-		Path newLink = Paths.get("/home/raashid/Directory-Filebeats/First.log"); //Filebeats read loc : $FILEBEAT_DIR
+		Path newLink = Paths.get("/home/raashid/Directory-Filebeats/First.log");
 		LOG.info("newLink : " + newLink.toString());
-		Path target = Paths.get(file.getAbsolutePath()); // The file name : BuildNumber-JobName-PipelineName.log
+		Path target = Paths.get(file.getAbsolutePath());
 		LOG.info("target : " + target.toString());
 		try {
 			LOG.info("Creating symbolic link");
 			Files.createSymbolicLink(newLink, target);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			LOG.info(e.toString());
 		}
 		LOG.info("Going to run for the result");
