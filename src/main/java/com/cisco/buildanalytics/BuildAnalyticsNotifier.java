@@ -57,21 +57,24 @@ public class BuildAnalyticsNotifier extends Notifier implements SimpleBuildStep 
 	private static final Logger LOG = Logger.getLogger(BuildAnalyticsNotifier.class.getName());
 	private static String CHARSET = "UTF-8";
 
-	public boolean failBuild;
-	public boolean uploadOnlyOnFail;
 	public String serverIp;
 	public String buildStageType;
+	public String filebeatsDirectory;
+	public String userPrefix;
 	public String jenkinsServerIp;
-	public String prefixUser;
+	public boolean uploadOnlyOnFail;
+	public boolean failBuild;
 
 	@DataBoundConstructor
-	public BuildAnalyticsNotifier(String serverIp, boolean uploadOnlyOnFail, boolean failBuild, String buildStageType, String jenkinsServerIp, String prefixUser) {
-		this.failBuild = failBuild;
+	public BuildAnalyticsNotifier(String serverIp, String buildStageType, String filebeatsDirectory, String userPrefix,
+			String jenkinsServerIp, boolean uploadOblyOnFail, boolean failBuild) {
 		this.serverIp = serverIp;
-		this.uploadOnlyOnFail = uploadOnlyOnFail;
 		this.buildStageType = buildStageType;
+		this.filebeatsDirectory = filebeatsDirectory;
+		this.userPrefix = userPrefix;
 		this.jenkinsServerIp = jenkinsServerIp;
-		this.prefixUser = prefixUser;
+		this.uploadOnlyOnFail = uploadOblyOnFail;
+		this.failBuild = failBuild;
 	}
 
 	@Override
@@ -92,87 +95,50 @@ public class BuildAnalyticsNotifier extends Notifier implements SimpleBuildStep 
 		}
 	}
 
-	private void uploadFile(File file, String ip, boolean success) {
+	private void createSymbolicLink(Path src, Path target) {
+		LOG.info("Creating symbolic link from " + target + " to " + src);
 		try {
-			LOG.info("Trying to upload");
-			MultiPartUtility mp = new MultiPartUtility(ip, CHARSET);
-			mp.addFilePart("file", file);
-			List<String> response = mp.finish();
-			System.out.println("SERVER REPLIED:");
-
-			for (String line : response) {
-				System.out.println(line);
-			}
-		} catch (IOException e) {
-			LOG.warning("ERROR while uploading " + e.toString());
-		}
-	}
-
-	/**
-	 * Using this only for testing 
-	 **/
-	private void test(Reader reader) {
-		try {
-			BufferedReader bf = new BufferedReader(reader);
-			String curr;
-			while ((curr = bf.readLine()) != null) {
-				LOG.info("From reader" + curr);
-			}
-		} catch (IOException e) {
-			LOG.info("AKK error occured " + e.toString());
-		}
-
-	}
-
-	private boolean perform(Run<?, ?> run, TaskListener listener) {
-		LOG.info("LOGSTASH performing");
-		LOG.info("Val " + this.serverIp + this.uploadOnlyOnFail);
-		File file = run.getLogFile();
-		String fileName = "prefixFromUser-" + run.getId();
-		String buildUrl = run.getUrl();
-
-		BuildParamsDTO buildParamsDTO = new BuildParamsDTO();
-		buildParamsDTO.setBuildStageType(buildStageType);
-		buildParamsDTO.setBuildUrl(buildUrl);
-		buildParamsDTO.setJenkinsServerIp(jenkinsServerIp);
-		buildParamsDTO.setPrefixUser(prefixUser);
-		buildParamsDTO.setFileName(fileName);
-
-		LOG.info("File : " + file.toString());
-		Path newLink = Paths.get("/home/raashid/Directory-Filebeats/First.log");
-		LOG.info("newLink : " + newLink.toString());
-		Path target = Paths.get(file.getAbsolutePath());
-		LOG.info("target : " + target.toString());
-		try {
-			LOG.info("Creating symbolic link");
-			Files.createSymbolicLink(newLink, target);
+			Files.createSymbolicLink(src, target);
 		} catch (IOException e) {
 			LOG.info(e.toString());
 		}
-		LOG.info("Going to run for the result");
-		Result r = run.getResult();
-		LOG.info(" Result r : " + r.toString());
-		if (r != null) {
-			LOG.info("Finished with Result:" + " :: " + r.toString());
-			if (r.isCompleteBuild()) {
-				LOG.info("Build was successful: " + r.toString());
-			}
+	}
+	
+	private void invokeAnalyticsAPI(String buildUrl){
+		//build DTO and invoke REST API here
+		
+	}
 
+	private boolean perform(Run<?, ?> run, TaskListener listener) {
+		LOG.info("Build Analytics Plugin - Running");
+		LOG.info("Parameters " + this.serverIp + this.uploadOnlyOnFail + this.buildStageType + this.jenkinsServerIp
+				+ this.userPrefix);
+
+		boolean success = false;
+		Result r = run.getResult();
+		if (r != null) {
+			success = r.isCompleteBuild();
 		} else {
-			LOG.info("In case of failure" + r.toString());
+			LOG.info("Result is null" + r.toString());
 		}
-		if(!this.uploadOnlyOnFail){
-			uploadFile(file, this.serverIp, r.isCompleteBuild());
-			//REST endpoint
-		}else{
+
+		if (!this.uploadOnlyOnFail || (this.uploadOnlyOnFail && !success)) {
+			File file = run.getLogFile();
+			String filename = this.userPrefix + "-$-" + this.buildStageType + "-$-" + run.getId();
+			Path newLink = Paths.get(this.filebeatsDirectory + "/" + filename);
+			Path target = Paths.get(file.getAbsolutePath());
+			createSymbolicLink(newLink, target);
+			
+			String buildUrl = run.getUrl();
+			invokeAnalyticsAPI(buildUrl);
+		} else {
 			LOG.info("Skipping upload as requested");
 		}
+
 		return !(failBuild);
 	}
 
 	public BuildStepMonitor getRequiredMonitorService() {
-		// We don't call Run#getPreviousBuild() so no external synchronization
-		// between builds is required
 		return BuildStepMonitor.NONE;
 	}
 
@@ -191,7 +157,7 @@ public class BuildAnalyticsNotifier extends Notifier implements SimpleBuildStep 
 		}
 
 		public String getDisplayName() {
-			return "Upload Logs-Raashid";
+			return "Upload Logs For Analysis";
 		}
 	}
 }
