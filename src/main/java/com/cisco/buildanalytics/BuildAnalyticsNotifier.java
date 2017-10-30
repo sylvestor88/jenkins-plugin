@@ -124,8 +124,8 @@ public class BuildAnalyticsNotifier extends Notifier implements SimpleBuildStep 
 
 		if (!this.uploadOnlyOnFail || (this.uploadOnlyOnFail && !success)) {
 			File file = run.getLogFile();
-			String filename = this.userPrefix + "-$-" + this.buildStageType + "-$-" + run.getId() + ".log";
-			Path newLink = Paths.get(this.filebeatsDirectory + "/" + filename);
+			String filename = this.userPrefix + "-$-" + this.buildStageType + "-$-" + run.getId();
+			Path newLink = Paths.get(this.filebeatsDirectory + "/" + filename + ".log");
 			Path target = Paths.get(file.getAbsolutePath());
 			createSymbolicLink(newLink, target);
 			
