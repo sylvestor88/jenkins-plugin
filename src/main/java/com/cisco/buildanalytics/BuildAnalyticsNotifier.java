@@ -24,8 +24,14 @@
 
 package com.cisco.buildanalytics;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -33,6 +39,8 @@ import java.util.logging.Logger;
 
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
+
+import com.google.gson.Gson;
 
 import hudson.Extension;
 import hudson.FilePath;
@@ -53,6 +61,7 @@ public class BuildAnalyticsNotifier extends Notifier implements SimpleBuildStep 
 
 	private static final Logger LOG = Logger.getLogger(BuildAnalyticsNotifier.class.getName());
 	private static String CHARSET = "UTF-8";
+	private static final Gson gson = new Gson();
 
 	public String serverIp;
 	public String buildStageType;
@@ -100,10 +109,46 @@ public class BuildAnalyticsNotifier extends Notifier implements SimpleBuildStep 
 			LOG.info(e.toString());
 		}
 	}
-	
-	private void invokeAnalyticsAPI(String buildUrl, String filename){
-		//build DTO and invoke REST API here
-		
+
+	private void invokeAnalyticsAPI(String buildUrl, String filename) {
+		BuildParamsDTO dto = new BuildParamsDTO();
+		dto.setBuildStageType(this.buildStageType);
+		dto.setFileName(filename);
+		dto.setJenkinsServerIp(this.jenkinsServerIp);
+		dto.setBuildUrl(buildUrl);
+		String result = gson.toJson(dto);
+
+		LOG.info("DTO: " + result);
+		postRequest(result);
+	}
+
+	private void postRequest(String result) {
+		try {
+			URL url = new URL(this.serverIp);
+			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			conn.setDoOutput(true);
+			conn.setRequestMethod("POST");
+			conn.setRequestProperty("Content-Type", "application/json");
+
+			OutputStream os = conn.getOutputStream();
+			os.write(result.getBytes());
+			os.flush();
+
+			BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+
+			String output;
+			System.out.println("Output from server");
+			while ((output = br.readLine()) != null) {
+				System.out.println(output);
+			}
+
+			conn.disconnect();
+		} catch (MalformedURLException e) {
+			LOG.warning(e.toString());
+		} catch (IOException e) {
+			LOG.warning(e.toString());
+		}
+
 	}
 
 	private boolean perform(Run<?, ?> run, TaskListener listener) {
@@ -125,7 +170,7 @@ public class BuildAnalyticsNotifier extends Notifier implements SimpleBuildStep 
 			Path newLink = Paths.get(this.filebeatsDirectory + "/" + filename + ".log");
 			Path target = Paths.get(file.getAbsolutePath());
 			createSymbolicLink(newLink, target);
-			
+
 			String buildUrl = run.getUrl();
 			invokeAnalyticsAPI(buildUrl, filename);
 		} else {
