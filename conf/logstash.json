@@ -1,0 +1,25 @@
+input {
+ beats {
+   port => 5044
+   host => "0.0.0.0"
+ }
+}
+
+filter {
+   ruby {
+      code => "
+        event.set('index_name', event.get('source').split('/')[-1].gsub('.log', ''))
+      "
+   }
+}
+
+output {
+
+stdout {}
+elasticsearch {
+    hosts => "localhost"
+    index => "%{index_name}"
+  }
+}
+
+
