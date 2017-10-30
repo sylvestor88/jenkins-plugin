@@ -24,14 +24,11 @@
 
 package com.cisco.buildanalytics;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.logging.Logger;
 
 import org.jenkinsci.Symbol;
@@ -104,7 +101,7 @@ public class BuildAnalyticsNotifier extends Notifier implements SimpleBuildStep 
 		}
 	}
 	
-	private void invokeAnalyticsAPI(String buildUrl){
+	private void invokeAnalyticsAPI(String buildUrl, String filename){
 		//build DTO and invoke REST API here
 		
 	}
@@ -124,13 +121,13 @@ public class BuildAnalyticsNotifier extends Notifier implements SimpleBuildStep 
 
 		if (!this.uploadOnlyOnFail || (this.uploadOnlyOnFail && !success)) {
 			File file = run.getLogFile();
-			String filename = this.userPrefix + "-$-" + this.buildStageType + "-$-" + run.getId();
+			String filename = this.userPrefix + "-x-" + this.buildStageType + "-x-" + run.getId();
 			Path newLink = Paths.get(this.filebeatsDirectory + "/" + filename + ".log");
 			Path target = Paths.get(file.getAbsolutePath());
 			createSymbolicLink(newLink, target);
 			
 			String buildUrl = run.getUrl();
-			invokeAnalyticsAPI(buildUrl);
+			invokeAnalyticsAPI(buildUrl, filename);
 		} else {
 			LOG.info("Skipping upload as requested");
 		}
