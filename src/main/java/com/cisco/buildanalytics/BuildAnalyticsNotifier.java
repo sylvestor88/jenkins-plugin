@@ -137,9 +137,9 @@ public class BuildAnalyticsNotifier extends Notifier implements SimpleBuildStep 
 			BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
 
 			String output;
-			System.out.println("Output from server");
+			LOG.info("Output from server");
 			while ((output = br.readLine()) != null) {
-				System.out.println(output);
+				LOG.info(output);
 			}
 
 			conn.disconnect();
