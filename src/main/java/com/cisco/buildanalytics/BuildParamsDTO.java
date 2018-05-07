@@ -1,19 +1,18 @@
 package com.cisco.buildanalytics;
 
 public class BuildParamsDTO {
-	private String serverIp;
+	private String jenkinsServer;
 	private String buildStageType;
-	private String jenkinsServerIp;
 	private String prefixUser;
 	private String buildUrl;
 	private String fileName;
 	
-	public String getServerIp(){
-		return serverIp;
+	public String getJenkinsServer(){
+		return jenkinsServer;
 	}
 	
-	public void setServerIp(String serverIp){
-		this.serverIp = serverIp;
+	public void setJenkinsServer(String jenkinsServer){
+		this.jenkinsServer = jenkinsServer;
 	}
 	
 	public String getBuildStageType(){
@@ -22,14 +21,6 @@ public class BuildParamsDTO {
 	
 	public void setBuildStageType(String buildStageType){
 		this.buildStageType = buildStageType;
-	}
-	
-	public String getJenkinsServerIp(){
-		return jenkinsServerIp;
-	}
-	
-	public void setJenkinsServerIp(String jenkinsServerIp){
-		this.jenkinsServerIp = jenkinsServerIp;
 	}
 
 	public String getPrefixUser(){
