@@ -35,10 +35,10 @@ public class ConsoleLogToFilebeats {
             log("wrote to bap.log", listener);
 
             // Create and Cleans Filebeats Directory
-            FilePath consoleFilePath = createAndCleanFilebeatsDir(filebeatsDirectory);
+//            FilePath consoleFilePath = createAndCleanFilebeatsDir(filebeatsDirectory);
 
             // Writes Console log to Filebeats Directory in the workspace
-            os = consoleFilePath.child(fileName).write();
+            os = workspace.child(fileName).write();
             writeLogFile(build.getLogText(), os);
             os.close();
             log("wrote console log to workspace file " + fileName + " successfully", listener);

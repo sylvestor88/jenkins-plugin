@@ -6,6 +6,8 @@ public class BuildParamsDTO {
 	private String prefixUser;
 	private String buildUrl;
 	private String fileName;
+	private String buildDisplayName;
+	private int buildNumber;
 	
 	public String getJenkinsServer(){
 		return jenkinsServer;
@@ -46,4 +48,12 @@ public class BuildParamsDTO {
 	public void setFileName(String fileName){
 		this.fileName = fileName;
 	}
+
+	public String getBuildDisplayName() { return buildDisplayName; }
+
+	public void setBuildDisplayName(String buildDisplayName) { this.buildDisplayName = buildDisplayName; }
+
+	public int getBuildNumber() { return buildNumber; }
+
+	public void setBuildNumber(int buildNumber) { this.buildNumber = buildNumber; }
 }

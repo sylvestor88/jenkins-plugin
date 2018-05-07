@@ -97,7 +97,7 @@ public class BuildAnalyticsNotifier extends Notifier implements SimpleBuildStep 
 		}
 	}
 
-	private void invokeAnalyticsAPI(String buildUrl, String filename) {
+	private void invokeAnalyticsAPI(String buildUrl, String filename, String buildDisplayName, int buildNumber) {
 		BuildParamsDTO dto = new BuildParamsDTO();
 
 		dto.setBuildStageType(this.buildStageType);
@@ -105,9 +105,13 @@ public class BuildAnalyticsNotifier extends Notifier implements SimpleBuildStep 
 		dto.setPrefixUser(this.userPrefix);
 		dto.setFileName(filename);
 		dto.setBuildUrl(buildUrl);
-		String result = gson.toJson(dto);
+		dto.setBuildDisplayName(buildDisplayName);
+		dto.setBuildNumber(buildNumber);
 
+		String result = gson.toJson(dto);
 		LOG.info("DTO: " + result);
+
+		// Post to Build Analytics Service
 		postRequest(result);
 	}
 
@@ -161,7 +165,7 @@ public class BuildAnalyticsNotifier extends Notifier implements SimpleBuildStep 
 			ConsoleLogToFilebeats.perform(run, workspace, listener,
 					filename, this.filebeatsDirectory);
 
-			invokeAnalyticsAPI(run.getUrl(), filename);
+			invokeAnalyticsAPI(run.getUrl(), filename, run.getFullDisplayName(), run.getNumber());
 		} else {
 			LOG.info("Skipping upload as requested");
 		}
